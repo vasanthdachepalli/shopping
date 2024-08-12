@@ -7,50 +7,48 @@ const ProductCards = (user) => {
   const [products, setProducts] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
 
+
+  const fetchData = async () => {
+    try {
+      const response = await axios.get('http://localhost:8080/api/order/wishlist', {
+          withCredentials: true // Include this option to send cookies with the request
+        });
+        console.log(response.data);
+      setProducts(response.data);
+    } catch (error) {
+      console.error('Error fetching product data:', error);
+    }
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await axios.get('http://localhost:8080/api/order');
-        setProducts(response.data);
-      } catch (error) {
-        console.error('Error fetching product data:', error);
-      }
-    };
+   
 
     fetchData();
   }, []);
 
   const filterProducts = (products, searchTerm) => {
     return products.filter(product =>
-      product.productName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.Sellerid.toString().includes(searchTerm) ||
-      product.brandName.toLowerCase().includes(searchTerm.toLowerCase())
+      product.data.productName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.data.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.data.Sellerid.toString().includes(searchTerm) ||
+      product.data.brandName.toLowerCase().includes(searchTerm.toLowerCase())
     );
   };
 
   const filteredProducts = filterProducts(products, searchTerm);
- let change1 = ()=>{
-   setSearchTerm(user.user)
-  }
-
-  const [userType, setUserType] = useState('');
-  
-    useEffect(() => {
-      const fetchUserType = async () => {
-        try {
-          const response = await axios.get('http://localhost:8080/api/user/type', {
+ let deleter = async (product) =>{
+    try {
+        const response = await axios.get('http://localhost:8080/api/wish/delete/'+ product.data._id, {
             withCredentials: true // Include this option to send cookies with the request
           });
-          setUserType(response.data[0].typeofperson);
-          console.log(response.data[0].typeofperson);
-        } catch (error) {
-          console.error('Error fetching user data:', error);
-        }
-      };
+          console.log(response);
+        fetchData();
+      } catch (error) {
+        console.error('Error fetching product data:', error);
+      }
+ }
+
   
-      fetchUserType();
-    }, []);
   return (
     <div className="product-cards">
       <input
@@ -60,7 +58,7 @@ const ProductCards = (user) => {
         onChange={(e) => setSearchTerm(e.target.value)}
         className="search-bar"
       />
-      {userType === 'seller' &&  <p onClick={change1} >click here to see only your product</p>}
+    
       {products === null ? (
         <div className="error-message">Error fetching products. Please try again later.</div>
       ) : (
@@ -71,21 +69,24 @@ const ProductCards = (user) => {
           >
             <Link 
               to={{ 
-                pathname: `/product/${product._id}`,
+                pathname: `/product/${product.data._id}`,
                 state: { product1:product} // Pass product object as state
               }} 
               className="card"
             >
-              <img src={product.photo} alt="Product" className="card-image" />
+              <img src={product.data.photo} alt="Product" className="card-image" />
               <div className="card-details">
-                <h3 className="product-name">{product.productName}</h3>
-                <p className="product-cost">${product.cost}</p>
+                <h3 className="product-name">{product.data.productName}</h3>
+                <p className="product-cost">${product.data.cost}</p>
                 <div className="tags">
-                  <span className="tag">{product.category}</span>
-                  <span className="tag">{product.brandName}</span>
+                  <span className="tag">{product.data.category}</span>
+                  <span className="tag">{product.data.brandName}</span>
                 </div>
+                
               </div>
             </Link>
+            <div onClick={() => deleter(product)}>Delete from wishlist</div>
+
           </div>
         ))
       )}
